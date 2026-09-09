@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Montoro — Laboratorio de Ingeniería y Diseño 3D</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #0a0d12;
+    --surface: #10151c;
+    --surface-2: #161d26;
+    --line: rgba(255,255,255,0.08);
+    --ink: #eef1f5;
+    --muted: #7c8798;
+    --orange: #ff7a3d;   /* filamento PLA naranja */
+    --cyan: #35d0e8;     /* trazo de plano / capa activa */
+    --radius: 18px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+
+  body{
+    font-family:'Space Grotesk', sans-serif;
+    background:
+      linear-gradient(var(--bg), var(--bg)),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.035) 39px, rgba(255,255,255,0.035) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.035) 39px, rgba(255,255,255,0.035) 40px);
+    color: var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 28px 16px;
+  }
+
+  .frame{
+    position:relative;
+    width:100%;
+    max-width:380px;
+  }
+
+  /* Marcas de esquina tipo plano técnico */
+  .corner{
+    position:absolute;
+    width:18px; height:18px;
+    border: 2px solid var(--cyan);
+    opacity:0.55;
+  }
+  .corner.tl{ top:-9px; left:-9px; border-right:none; border-bottom:none; }
+  .corner.tr{ top:-9px; right:-9px; border-left:none; border-bottom:none; }
+  .corner.bl{ bottom:-9px; left:-9px; border-right:none; border-top:none; }
+  .corner.br{ bottom:-9px; right:-9px; border-left:none; border-top:none; }
+
+  .coord{
+    position:absolute;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+  .coord.top{ top:-24px; left:0; }
+  .coord.bottom{ bottom:-24px; right:0; }
+
+  .card{
+    position:relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px 22px 24px;
+    text-align:center;
+    overflow:hidden;
+  }
+
+  .card::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background: linear-gradient(90deg, transparent, var(--orange), var(--cyan), transparent);
+    background-size: 200% 100%;
+    animation: scanline 5s linear infinite;
+  }
+
+  @keyframes scanline{
+    0%{ background-position: 200% 0; }
+    100%{ background-position: -200% 0; }
+  }
+
+  /* Hero: el letrero real como portada, no un ícono circular */
+  .hero-logo{
+    margin: -30px -22px 16px;
+    padding: 14px 14px 18px;
+    background: #000;
+    border-bottom: 1px solid var(--line);
+    opacity:0;
+    animation: hero-in 0.9s cubic-bezier(0.25,0.8,0.25,1) 0.15s forwards;
+  }
+
+  .hero-logo img{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius: 10px;
+    filter: drop-shadow(0 0 22px rgba(255,90,60,0.22)) drop-shadow(0 0 26px rgba(53,150,255,0.18));
+  }
+
+  @keyframes hero-in{
+    from{ opacity:0; transform: scale(0.97); }
+    to{ opacity:1; transform: scale(1); }
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;
+  }
+
+  .tagline{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--cyan);
+    margin-top:4px;
+    margin-bottom: 22px;
+  }
+
+  .tagline::before{ content:'// '; color: var(--muted); }
+
+  .links-list{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+  }
+
+  .icon-btn{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding: 11px 14px;
+    border-radius: 13px;
+    text-decoration:none;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    transition: transform 0.25s cubic-bezier(0.25,0.8,0.25,1), border-color 0.25s, background 0.25s;
+    overflow:hidden;
+  }
+
+  .icon-btn svg{ width:22px; height:22px; flex-shrink:0; position:relative; z-index:1; }
+
+  .btn-text{ text-align:left; position:relative; z-index:1; }
+  .btn-title{ font-size:0.86rem; font-weight:600; }
+  .btn-desc{ font-family:'JetBrains Mono', monospace; font-size:0.62rem; color:var(--muted); margin-top:2px; }
+
+  .icon-btn .fill{
+    position:absolute; inset:0;
+    background: currentColor;
+    opacity:0.08;
+    transform: scaleX(0);
+    transform-origin:left;
+    transition: transform 0.45s cubic-bezier(0.65,0,0.35,1);
+  }
+
+  .icon-btn:hover{ transform: translateX(3px); background: var(--surface); }
+  .icon-btn:hover .fill{ transform: scaleX(1); }
+  .icon-btn:active{ transform: translateX(3px) scale(0.98); }
+
+  .tiktok{ color:#e8eaed; border-color: rgba(255,255,255,0.14); }
+  .tiktok svg{ fill:#ffffff; }
+  .instagram{ color:#ff3377; }
+  .instagram svg{ fill:#ff3377; }
+  .youtube{ color:#ff3b3b; }
+  .youtube svg{ fill:#ff3b3b; }
+  .facebook{ color:#3b82f6; }
+  .facebook svg{ fill:#3b82f6; }
+  .whatsapp{ color:#2fd66b; }
+  .whatsapp svg{ fill:#2fd66b; }
+  .maps{ color:#ea9c3d; }
+  .maps svg{ fill:#ea9c3d; }
+
+  /* Botón de Productos y Diseños — CTA principal */
+  .cta{
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .cta-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.6rem;
+    color: var(--muted);
+    text-align:left;
+    margin-bottom:8px;
+  }
+
+  .products-btn{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 14px 16px;
+    border-radius: 13px;
+    text-decoration:none;
+    background: linear-gradient(120deg, rgba(255,122,61,0.16), rgba(53,208,232,0.12));
+    border: 1px solid rgba(255,122,61,0.4);
+    position:relative;
+    overflow:hidden;
+    transition: transform 0.25s cubic-bezier(0.25,0.8,0.25,1);
+  }
+
+  .products-btn:hover{ transform: translateY(-2px); }
+  .products-btn:active{ transform: translateY(0) scale(0.98); }
+
+  .products-text{ text-align:left; }
+  .products-title{ font-size:0.95rem; font-weight:700; color:var(--ink); }
+  .products-desc{ font-family:'JetBrains Mono', monospace; font-size:0.62rem; color: var(--muted); margin-top:2px; }
+
+  .arrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.1rem;
+    color: var(--orange);
+    transition: transform 0.25s;
+  }
+  .products-btn:hover .arrow{ transform: translateX(4px); }
+
+  .footer-note{
+    margin-top:18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.58rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .card::before, .ring-progress{ animation: none; }
+    .ring-progress{ stroke-dashoffset: 0; }
+  }
+
+  a:focus-visible, .icon-btn:focus-visible, .products-btn:focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="frame">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div class="coord top">MONTORO_LAB / v1.0</div>
+    <div class="coord bottom">RENDER_OK</div>
+
+    <div class="card">
+      <div class="hero-logo">
+        <img src="logo.png" alt="Montoro — letrero LED con toro rojo y tiburón azul">
+      </div>
+
+      <h1 class="sr-only">Montoro</h1>
+      <p class="tagline">Laboratorio de Ingeniería y Diseño 3D</p>
+
+      <div class="links-list">
+
+        <a href="https://www.tiktok.com/@reefprintermx" target="_blank" rel="noopener" class="icon-btn tiktok">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">TikTok</span>
+            <span class="btn-desc">Letreros LED y STL gratis</span>
+          </div>
+        </a>
+
+        <a href="https://www.instagram.com/light3d_mon_mx/" target="_blank" rel="noopener" class="icon-btn instagram">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.444-.048-3.298c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">Instagram</span>
+            <span class="btn-desc">Galería de prototipos</span>
+          </div>
+        </a>
+
+        <a href="https://www.youtube.com/@Light3D_Mon_Mx" target="_blank" rel="noopener" class="icon-btn youtube">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M8.051 1.999h-.089c-.822.003-2.458.014-3.283.04-1.302.047-2.189.345-2.696.852C1.472 3.4 1.174 4.287 1.127 5.59c-.027.824-.038 2.46-.04 3.283V9c.002.822.013 2.459.04 3.283.047 1.302.346 2.189.853 2.696.507.507 1.394.805 2.696.852.825.026 2.461.038 3.283.04h.09c.822-.002 2.459-.013 3.283-.04 1.302-.047 2.189-.345 2.696-.852.507-.507.805-1.394.852-2.696.026-.824.038-2.461.04-3.283v-.09c-.002-.822-.013-2.459-.04-3.283-.047-1.302-.345-2.189-.852-2.696-.507-.507-1.394-.805-2.696-.852-.824-.026-2.459-.038-3.283-.04zm-1.87 3.961l4.57 2.504-4.57 2.505v-5.009z"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">YouTube</span>
+            <span class="btn-desc">Tutoriales y proyectos</span>
+          </div>
+        </a>
+
+        <a href="https://www.facebook.com/ReefPrinterMX" target="_blank" rel="noopener" class="icon-btn facebook">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">Facebook</span>
+            <span class="btn-desc">Página oficial y catálogo</span>
+          </div>
+        </a>
+
+        <a href="https://wa.me/5215613343791?text=Hola%2C%20vi%20tu%20p%C3%A1gina%20y%20quiero%20cotizar%20un%20proyecto" target="_blank" rel="noopener" class="icon-btn whatsapp">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.472.205.84.326 1.129.418.475.152.904.129 1.24.08.38-.058 1.171-.48 1.336-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">WhatsApp</span>
+            <span class="btn-desc">Cotiza tu proyecto</span>
+          </div>
+        </a>
+
+        <a href="https://maps.app.goo.gl/1iWjc2np3x11VHdh7" target="_blank" rel="noopener" class="icon-btn maps">
+          <div class="fill"></div>
+          <svg viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
+          <div class="btn-text">
+            <span class="btn-title">Ubicación</span>
+            <span class="btn-desc">Cómo llegar al taller</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="cta">
+        <p class="cta-label">CATÁLOGO</p>
+        <a href="productos.html" class="products-btn">
+          <div class="products-text">
+            <div class="products-title">Productos y Diseños</div>
+            <div class="products-desc">Ver piezas, letreros y modelos STL</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+    </div>
+
+    <p class="footer-note">TOCA EL NFC PARA COMPARTIR ESTA TARJETA</p>
+  </div>
+
+</body>
+</html>
