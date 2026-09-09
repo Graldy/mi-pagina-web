@@ -313,7 +313,35 @@
     z-index:50;
   }
   .lightbox.open{ display:flex; }
-  .lightbox img{ max-width:100%; max-height:100%; border-radius:12px; }
+  .lightbox img{ max-width:100%; max-height:100%; border-radius:12px; touch-action: pan-y; }
+  .lightbox-arrow{
+    position:absolute;
+    top:50%;
+    transform: translateY(-50%);
+    width:42px; height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background: rgba(10,13,18,0.75);
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:51;
+  }
+  .lightbox-arrow svg{ width:20px; height:20px; }
+  .lightbox-arrow.prev{ left:10px; }
+  .lightbox-arrow.next{ right:10px; }
+  .lightbox-arrow[hidden]{ display:none; }
+  .lightbox-count{
+    position:absolute;
+    bottom:18px; left:0; right:0;
+    text-align:center;
+    color: var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.7rem;
+    opacity:0.8;
+  }
   .lightbox-close{
     position:absolute; top:18px; right:18px;
     width:36px; height:36px;
@@ -610,7 +638,14 @@
 
   <div class="lightbox" id="lightbox">
     <div class="lightbox-close" id="lightboxClose">✕</div>
+    <button class="lightbox-arrow prev" id="lightboxPrev" aria-label="Foto anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <img id="lightboxImg" src="" alt="">
+    <button class="lightbox-arrow next" id="lightboxNext" aria-label="Foto siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <div class="lightbox-count" id="lightboxCount"></div>
   </div>
 
 <script>
@@ -683,17 +718,71 @@
     });
   });
 
-  // --- Lightbox (fotos sueltas y fotos dentro de carruseles) ---
+  // --- Lightbox (fotos sueltas y fotos dentro de carruseles, con navegación) ---
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
+  const lightboxCount = document.getElementById('lightboxCount');
 
-  document.querySelectorAll('.shot img, .carousel-track img').forEach(img => {
-    img.addEventListener('click', () => {
-      lightboxImg.src = img.src;
-      lightboxImg.alt = img.alt;
-      lightbox.classList.add('open');
+  let lightboxGroup = [];   // imágenes del carrusel/tarjeta actual
+  let lightboxIndex = 0;
+
+  function renderLightbox(){
+    const img = lightboxGroup[lightboxIndex];
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    const multi = lightboxGroup.length > 1;
+    lightboxPrev.hidden = !multi;
+    lightboxNext.hidden = !multi;
+    lightboxCount.textContent = multi ? `${lightboxIndex + 1}/${lightboxGroup.length}` : '';
+  }
+
+  function openLightboxAt(group, index){
+    lightboxGroup = group;
+    lightboxIndex = index;
+    renderLightbox();
+    lightbox.classList.add('open');
+  }
+
+  function stepLightbox(delta){
+    if (lightboxGroup.length <= 1) return;
+    lightboxIndex = (lightboxIndex + delta + lightboxGroup.length) % lightboxGroup.length;
+    renderLightbox();
+  }
+
+  document.querySelectorAll('.shot, .carousel-track').forEach(container => {
+    const imgs = [...container.querySelectorAll('img')];
+    imgs.forEach((img, i) => {
+      img.addEventListener('click', () => openLightboxAt(imgs, i));
     });
   });
+
+  lightboxPrev.addEventListener('click', e => { e.stopPropagation(); stepLightbox(-1); });
+  lightboxNext.addEventListener('click', e => { e.stopPropagation(); stepLightbox(1); });
+
+  document.addEventListener('keydown', e => {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') stepLightbox(-1);
+    if (e.key === 'ArrowRight') stepLightbox(1);
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  // Deslizado táctil (swipe) dentro del lightbox
+  let touchStartX = 0;
+  let touchStartY = 0;
+  lightbox.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      stepLightbox(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
 
   function closeLightbox(){ lightbox.classList.remove('open'); }
   document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
