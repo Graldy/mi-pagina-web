@@ -95,8 +95,14 @@
     padding: 14px 14px 18px;
     background: #000;
     border-bottom: 1px solid var(--line);
-    opacity:0;
-    animation: hero-in 0.9s cubic-bezier(0.25,0.8,0.25,1) 0.15s forwards;
+    opacity:1;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .hero-logo{
+      opacity:0;
+      animation: hero-in 0.9s cubic-bezier(0.25,0.8,0.25,1) 0.15s forwards;
+    }
   }
 
   .hero-logo img{
@@ -122,7 +128,7 @@
     font-size: 0.7rem;
     color: var(--cyan);
     margin-top:4px;
-    margin-bottom: 22px;
+    margin-bottom: 12px;
   }
 
   .tagline::before{ content:'// '; color: var(--muted); }
@@ -185,6 +191,52 @@
     padding-top: 16px;
     border-top: 1px dashed var(--line);
   }
+
+  .cta-top{
+    margin-top: 10px;
+    padding-top: 0;
+    padding-bottom: 14px;
+    border-top: none;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  /* Video destacado: lo que hemos hecho */
+  .showcase{
+    margin-top: 10px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .showcase-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.6rem;
+    color: var(--muted);
+    margin-bottom:8px;
+  }
+  .showcase video{
+    width:100%;
+    height: 38vh;
+    display:block;
+    border-radius: 13px;
+    border: 1px solid var(--line);
+    background:#000;
+    object-fit: cover;
+  }
+  .video-wrap{ position:relative; }
+  .sound-btn{
+    position:absolute;
+    bottom:10px; right:10px;
+    width:34px; height:34px;
+    border-radius:50%;
+    background: rgba(10,13,18,0.75);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .sound-btn svg{ width:16px; height:16px; }
+  .sound-btn.on{ border-color: var(--green); color: var(--green); }
 
   .cta-label{
     font-family:'JetBrains Mono', monospace;
@@ -261,6 +313,27 @@
       <h1 class="sr-only">Montoro</h1>
       <p class="tagline">Laboratorio de Ingeniería y Diseño 3D</p>
 
+      <div class="cta cta-top">
+        <p class="cta-label">CATÁLOGO</p>
+        <a href="productos.html" class="products-btn">
+          <div class="products-text">
+            <div class="products-title">Productos y Diseños</div>
+            <div class="products-desc">Ver piezas, letreros y modelos STL</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <div class="showcase">
+        <p class="showcase-label">LO QUE HEMOS HECHO</p>
+        <div class="video-wrap">
+          <video id="showcaseVideo" src="showcase.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          <button class="sound-btn" id="soundBtn" aria-label="Activar sonido">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 4a.5.5 0 0 0-.812-.39L5.825 5.5H3.5A.5.5 0 0 0 3 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 9 12zm3.025 4a4.5 4.5 0 0 1-1.318 3.182.5.5 0 1 1-.707-.708 3.5 3.5 0 0 0 0-4.948.5.5 0 0 1 .707-.707A4.5 4.5 0 0 1 12.025 8"/></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="links-list">
 
         <a href="https://www.tiktok.com/@reefprintermx" target="_blank" rel="noopener" class="icon-btn tiktok">
@@ -319,21 +392,26 @@
 
       </div>
 
-      <div class="cta">
-        <p class="cta-label">CATÁLOGO</p>
-        <a href="productos.html" class="products-btn">
-          <div class="products-text">
-            <div class="products-title">Productos y Diseños</div>
-            <div class="products-desc">Ver piezas, letreros y modelos STL</div>
-          </div>
-          <span class="arrow">→</span>
-        </a>
-      </div>
-
     </div>
 
     <p class="footer-note">TOCA EL NFC PARA COMPARTIR ESTA TARJETA</p>
   </div>
+
+  <script>
+    const showcaseVideo = document.getElementById('showcaseVideo');
+    const soundBtn = document.getElementById('soundBtn');
+    const iconOn = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/><path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/><path d="M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325L6.188 3.61a.5.5 0 0 1 .529-.06"/></svg>';
+    const iconOff = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 4a.5.5 0 0 0-.812-.39L5.825 5.5H3.5A.5.5 0 0 0 3 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 9 12zm3.025 4a4.5 4.5 0 0 1-1.318 3.182.5.5 0 1 1-.707-.708 3.5 3.5 0 0 0 0-4.948.5.5 0 0 1 .707-.707A4.5 4.5 0 0 1 12.025 8"/></svg>';
+
+    if (showcaseVideo && soundBtn) {
+      soundBtn.addEventListener('click', () => {
+        showcaseVideo.muted = !showcaseVideo.muted;
+        soundBtn.classList.toggle('on', !showcaseVideo.muted);
+        soundBtn.innerHTML = showcaseVideo.muted ? iconOff : iconOn;
+        if (!showcaseVideo.muted) showcaseVideo.play();
+      });
+    }
+  </script>
 
 </body>
 </html>
